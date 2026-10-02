@@ -1,0 +1,10 @@
+# Secretos: NUNCA al repo publico
+config.json
+.env
+*.key
+.ssh/
+
+# Entorno local
+.venv/
+__pycache__/
+*.pyc

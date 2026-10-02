@@ -1,0 +1,28 @@
+name: Cripto Radar
+
+on:
+  schedule:
+    # Cada 30 min, en minutos "raros" para esquivar la cola del minuto 0.
+    # OJO: GitHub no garantiza puntualidad, puede atrasarse varios minutos.
+    - cron: "7,37 * * * *"
+  workflow_dispatch:   # permite correrlo a mano desde la pestana Actions
+
+jobs:
+  radar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Correr el radar
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python radar.py
