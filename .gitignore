@@ -8,3 +8,6 @@ config.json
 .venv/
 __pycache__/
 *.pyc
+
+# Cache del backtest (se regenera sola)
+data/
