@@ -65,6 +65,19 @@ def main():
             # Anotacion del run: se lee por la API publica sin iniciar sesion
             print(f"::notice title=probe::{linea}")
 
+    # V3-1: el recolector completo del briefing (Binance + Coin Metrics + alternative.me)
+    try:
+        import briefing_datos
+        d = briefing_datos.recolectar()
+        btc = d["monedas"].get("BTC", {})
+        linea = (f"{'OK' if not d['faltantes'] else 'FALLA':<6} briefing_datos: faltantes={d['faltantes']} "
+                 f"btc_cierre={btc.get('cierre')} mvrv={btc.get('mvrv')} miedo_codicia={(d.get('miedo_codicia') or {}).get('valor')}")
+    except Exception as e:
+        linea = f"FALLA  briefing_datos: {type(e).__name__}: {str(e)[:90]}"
+    print(linea)
+    if en_actions:
+        print(f"::notice title=probe::{linea}")
+
 
 if __name__ == "__main__":
     main()
