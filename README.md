@@ -26,11 +26,20 @@ Corolario: como el sistema solo lee datos públicos, este repo puede ser públic
 | Archivo | Qué hace |
 |---|---|
 | `radar.py` | **Punto de entrada.** Corre los dos agentes, arma un mensaje y lo manda por Telegram |
-| `opportunity_scanner.py` | Buscador: escanea el top 100, detecta subidas y picos de volumen |
+| `opportunity_scanner.py` | Monitor de movimientos: escanea el top 100 y avisa de subidas y picos de volumen fuertes |
 | `watchlist_analyst.py` | Analista 24/7: monitorea la watchlist (BTC, ETH, WLD, NEAR, XRP) |
 | `notify.py` | Envía los mensajes por Telegram |
+| `backtest.py` | Prueba las reglas del monitor contra 90 días de historia. Correrlo antes de tocar un umbral |
 | `fetch_market.py` | Prueba suelta de conexión con CoinGecko |
 | `.github/workflows/radar.yml` | El cron que lo corre cada 30 min |
+
+## ⚠️ Lo que el radar NO es
+
+Las alertas avisan que algo **ya se movió**, no que algo **va a subir**.
+
+El backtest del 2026-10-03 (`backtest_resultados.md`) probó las tres reglas contra 90 días de historia del top 30: **ninguna le gana a la línea base** (la misma moneda en una hora cualquiera). Las de movimiento en 1h y pico de volumen rinden *peor* que el azar en los tres horizontes, porque llegan tarde: después del salto, la moneda en promedio devuelve parte.
+
+Por eso el script se llama "monitor de movimientos" y no "buscador de oportunidades", y los umbrales están altos: el objetivo es avisar solo de lo que de verdad se sale de lo normal, con pocas alertas.
 
 ## Credenciales
 
@@ -66,14 +75,22 @@ IDs de CoinGecko: `bitcoin`, `ethereum`, `worldcoin-wld`, `near`, `ripple`.
 
 ## Umbrales de señal
 
-Se editan arriba de `opportunity_scanner.py`:
+Se editan arriba de `opportunity_scanner.py`. **Antes de cambiar uno, correr `backtest.py`** para ver qué pasa con el ruido y con la ventaja.
 
-| Constante | Valor | Significa |
-|---|---|---|
-| `SIGNAL_24H` | 10.0 | subida de 24h que dispara señal |
-| `SIGNAL_1H` | 3.0 | movimiento de 1h que dispara señal |
-| `VOLUME_RATIO` | 0.15 | volumen/market cap que cuenta como pico |
-| `MIN_MARKET_CAP` | 50M | piso para filtrar monedas sin liquidez |
+| Constante | Valor | Antes del 2026-10-03 | Significa |
+|---|---|---|---|
+| `SIGNAL_24H` | 20.0 | 10.0 | subida de 24h que dispara alerta |
+| `SIGNAL_1H` | 5.0 | 3.0 | movimiento de 1h que dispara alerta |
+| `VOLUME_RATIO` | 0.35 | 0.15 | volumen/market cap que cuenta como pico |
+| `MIN_MARKET_CAP` | 50M | 50M | piso para filtrar monedas sin liquidez |
+
+## Cómo correr el backtest
+
+```
+.venv/Scripts/python.exe backtest.py
+```
+
+La primera vez baja la historia de CoinGecko (~5 min por el límite de llamadas) y la guarda en `data/`, que no se sube al repo. Las siguientes corridas salen del caché y son instantáneas. Para datos frescos, borrar `data/`. Genera `backtest_resultados.md`.
 
 ---
 

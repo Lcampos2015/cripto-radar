@@ -28,7 +28,7 @@ def build_message():
     ahora = datetime.now(PERU).strftime("%d/%m %H:%M")
     partes = [
         f"\U0001F4E1 CRIPTO RADAR - {ahora}",
-        seccion("Buscador", opportunity_scanner.build_report),
+        seccion("Movimientos", opportunity_scanner.build_report),
         seccion("Analista", watchlist_analyst.build_report),
         "—\nSolo analisis. Vos decidis cuando comprar o vender.",
     ]

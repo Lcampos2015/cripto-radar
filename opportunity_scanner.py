@@ -1,9 +1,15 @@
-"""Cripto Radar IA - M3: Agente Buscador de Oportunidades.
+"""Cripto Radar IA - M3: Monitor de Movimientos (antes "Buscador de Oportunidades").
 
-Escanea el mercado con CoinGecko y detecta movimientos por reglas simples:
-- SUBIDA 24h: +10% o mas en 24h
-- MOVIMIENTO 1h: +3% o mas en 1h
-- PICO VOLUMEN: volumen/market_cap >= 15%
+Escanea el mercado con CoinGecko y detecta movimientos fuertes por reglas simples:
+- SUBIDA 24h: +20% o mas en 24h
+- MOVIMIENTO 1h: +5% o mas en 1h
+- PICO VOLUMEN: volumen/market_cap >= 35%
+
+OJO: son avisos de que algo SE MOVIO, no de que algo VA a subir. El backtest
+del 2026-10-03 (backtest.py, 90 dias, top 30) mostro que ninguna de estas reglas
+le gana a la linea base; MOV 1h y PICO VOL rinden peor que el azar porque
+llegan tarde (despues del salto, la moneda suele devolver parte). Por eso los
+umbrales se subieron: menos alertas, y no se pierde ventaja porque no la habia.
 
 Solo analiza y reporta. NUNCA ejecuta compra/venta (regla dura W1).
 """
@@ -19,12 +25,13 @@ STABLECOINS = {
     "eurc", "eurt", "xsgd", "usd0", "pyusd", "usdtb", "usd1", "usdg",
 }
 
-# Config de reglas (ajustable)
+# Config de reglas (ajustable). Antes de cambiar un umbral, correr backtest.py.
+# Valores previos al 2026-10-03: 24h 10%, 1h 3%, vol 15% (unas 2 alertas por pasada en el top 30).
 TOP_N = 100              # cuantas monedas escanear
 MIN_MARKET_CAP = 50_000_000   # minimo $50M para filtrar basura
-SIGNAL_24H = 10.0        # % subida en 24h -> "subida fuerte"
-SIGNAL_1H = 3.0          # % subida en 1h -> "movimiento fuerte"
-VOLUME_RATIO = 0.15      # volumen/market_cap -> "pico de volumen"
+SIGNAL_24H = 20.0        # % subida en 24h -> "subida fuerte"
+SIGNAL_1H = 5.0          # % subida en 1h -> "movimiento fuerte"
+VOLUME_RATIO = 0.35      # volumen/market_cap -> "pico de volumen"
 
 
 def fetch_market(n=TOP_N):
@@ -88,14 +95,15 @@ def build_report():
         sigs = build_signals(c)
         if sigs:
             desc = " | ".join(f"{s} {v}" for s, v in sigs)
-            lineas.append(f"\U0001F7E2 {c['symbol'].upper()} ${c['current_price']:,.4f} - {desc}")
+            lineas.append(f"• {c['symbol'].upper()} {fmt_precio(c['current_price'])} - {desc}")
 
     if not lineas:
-        return "\U0001F50D BUSCADOR: sin oportunidades (nada supero los umbrales)."
+        return "\U0001F4CD MOVIMIENTOS: nada fuera de lo comun."
 
     cabecera = (
-        f"\U0001F50D BUSCADOR: {len(lineas)} senal(es) "
-        f"(24h>={SIGNAL_24H:.0f}% | 1h>={SIGNAL_1H:.0f}% | vol>={VOLUME_RATIO*100:.0f}% cap)"
+        f"\U0001F4CD MOVIMIENTOS DETECTADOS: {len(lineas)} "
+        f"(24h>={SIGNAL_24H:.0f}% | 1h>={SIGNAL_1H:.0f}% | vol>={VOLUME_RATIO*100:.0f}% cap)\n"
+        f"Ya ocurrieron: no anticipan subidas (ver backtest)."
     )
     return cabecera + "\n" + "\n".join(lineas)
 
