@@ -3,6 +3,7 @@
 Se corre en la PC y en GitHub Actions (workflow probe.yml) para comparar.
 Solo endpoints publicos de datos de mercado: sin claves, solo lectura (W1).
 """
+import os
 import sys
 from datetime import datetime, timezone
 
@@ -48,16 +49,21 @@ def main():
         sys.stdout.reconfigure(encoding="utf-8")
     except Exception:
         pass
+    en_actions = os.environ.get("GITHUB_ACTIONS") == "true"
     for nombre, (url, params) in FUENTES.items():
         try:
             r = requests.get(url, params=params, headers=H, timeout=20)
             if r.status_code != 200:
-                print(f"FALLA  {nombre:<34} HTTP {r.status_code}: {r.text[:90]!r}")
-                continue
-            n, desde, hasta = velas(nombre, r.json())
-            print(f"OK     {nombre:<34} {n:>4} velas diarias  {desde} -> {hasta}")
+                linea = f"FALLA  {nombre:<34} HTTP {r.status_code}: {r.text[:90]!r}"
+            else:
+                n, desde, hasta = velas(nombre, r.json())
+                linea = f"OK     {nombre:<34} {n:>4} velas diarias  {desde} -> {hasta}"
         except Exception as e:
-            print(f"FALLA  {nombre:<34} {type(e).__name__}: {str(e)[:90]}")
+            linea = f"FALLA  {nombre:<34} {type(e).__name__}: {str(e)[:90]}"
+        print(linea)
+        if en_actions:
+            # Anotacion del run: se lee por la API publica sin iniciar sesion
+            print(f"::notice title=probe::{linea}")
 
 
 if __name__ == "__main__":

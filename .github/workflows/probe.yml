@@ -1,7 +1,11 @@
 name: Probe fuentes de datos
 
 on:
-  workflow_dispatch:   # solo a mano: verifica que fuentes de velas responden desde GitHub
+  workflow_dispatch:
+  push:
+    paths:   # corre solo cuando cambia el probe, no con cada commit
+      - probe_fuentes.py
+      - .github/workflows/probe.yml
 
 jobs:
   probe:
