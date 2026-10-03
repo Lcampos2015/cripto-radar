@@ -78,6 +78,9 @@ CASOS = [
     # Agregados tras el primer intento (bug de tolerancia): un entero vale solo si es redondeo o recorte exacto
     ("Entero cercano pero falso", "BTC subió 10% en el mes.", DATOS, ["10"]),
     ("Entero bien redondeado y recortado", "BTC +9% en el mes; RSI 63; cierre 84518.", DATOS, []),
+    # Agregado tras la prueba forzada de V3-7: "EMA20/50/200" se leia como la fecha 20/50
+    ("Medias escritas con barras no son fechas", "Sigue sobre EMA20/50/200 y sobre 20/50/200.", DATOS, []),
+    ("Fecha inválida tratada como números", "Dato del 33/10.", DATOS, ["33", "10"]),
 ]
 
 

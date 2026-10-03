@@ -41,6 +41,20 @@ El backtest del 2026-10-03 (`backtest_resultados.md`) probó las tres reglas con
 
 Por eso el script se llama "monitor de movimientos" y no "buscador de oportunidades", y los umbrales están altos: el objetivo es avisar solo de lo que de verdad se sale de lo normal, con pocas alertas.
 
+## 🧠 Briefing con LLM (v3)
+
+| Qué | Cuándo | Archivo |
+|---|---|---|
+| Briefing diario de BTC y ETH + watchlist | 19:05 Perú (00:05 UTC) | `briefing.py`, workflow `briefing.yml` |
+| Briefing extra por movimiento fuerte (±2,5× ATR en 24h, ~1/mes) | chequea cada 30 min | `evento.py`, dentro de `radar.yml` |
+| Monitor del top 100 | cada 30 min, **solo avisa si detecta algo** | `radar.py` |
+
+Flujo: `briefing_datos.py` (datos duros: Binance, Coin Metrics, alternative.me) → `briefing_llm.py` (redacta `openai/gpt-5.4-mini` vía OpenRouter, sin recomendar ni predecir) → `verificador_cifras.py` (marca ⚠️ si aparece una cifra que no está en los datos) → Telegram.
+
+Regla de diseño: **el LLM redacta, no interpreta.** Las lecturas de signos (si entran o salen monedas de los exchanges, si el MVRV está caro o barato) las escribe el código. Pruebas: `test_verificador.py`, `test_evento.py`, `test_briefing_llm.py`.
+
+Secrets necesarios: `TELEGRAM_TOKEN`, `TELEGRAM_CHAT_ID`, `OPENROUTER_API_KEY`. `estado_eventos.json` lo commitea el workflow cuando avisa de un evento: **antes de hacer push desde la PC, `git pull --rebase`**.
+
 ## 🔬 Investigación de swing trading (2026-10-03) — en pausa
 
 Se buscó una señal de entrada para swing de 2-5 días en BTC y ETH (1% de riesgo, stop 1,5×ATR, objetivo 3×ATR, comisiones de Binance). Resultado: **ninguna señal le gana a entrar al azar**.

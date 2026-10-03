@@ -7,6 +7,15 @@ on:
     - cron: "7,37 * * * *"
   workflow_dispatch:   # permite correrlo a mano desde la pestana Actions
 
+# Para commitear estado_eventos.json cuando se avisa de un evento (V3-7)
+permissions:
+  contents: write
+
+# Nunca dos corridas a la vez: las dos podrian leer el mismo estado y avisar dos veces
+concurrency:
+  group: radar
+  cancel-in-progress: false
+
 jobs:
   radar:
     runs-on: ubuntu-latest
@@ -21,8 +30,29 @@ jobs:
 
       - run: pip install -r requirements.txt
 
-      - name: Correr el radar
+      - name: Monitor de movimientos (solo avisa si hay algo)
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python radar.py
+
+      - name: Briefing por evento fuerte en BTC/ETH (V3-7)
+        if: always()
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python evento.py
+
+      - name: Guardar estado de eventos (solo si se aviso)
+        if: always()
+        run: |
+          if [ -n "$(git status --porcelain estado_eventos.json)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add estado_eventos.json
+            git commit -m "Estado de eventos: aviso enviado"
+            git push
+          else
+            echo "Sin cambios de estado."
+          fi

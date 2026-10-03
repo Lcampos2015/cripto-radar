@@ -63,6 +63,7 @@ CÓMO LEER EL JSON:
 - miedo_codicia: índice de sentimiento 0-100 (más de 75 codicia extrema, menos de 25 miedo extremo).
 - mvrv_lectura, flujo_lectura y flujo_inusual: la interpretación YA HECHA de esos datos. Usala tal cual para describir el sentido (si entran o salen monedas, si el MVRV está caro o barato). No la deduzcas vos de los signos.
 - regimen.btc_sobre_ema200: si BTC está sobre su EMA200.
+- evento (solo si existe): este es un briefing EXTRA porque una moneda se movió fuerte. cambio_24h_pct es su cambio de las últimas 24 horas, precio_actual el precio en este momento, y umbral_pct el movimiento que se considera fuera de lo normal para esa moneda (veces_atr veces su volatilidad diaria). Empezá "Qué pasó" por el evento. Ojo: cierre y cambio_1d_pct son de la última vela diaria CERRADA, no de ahora.
 - faltantes: fuentes que no respondieron hoy.
 
 CONTEXTO IMPORTANTE: en los backtests de este proyecto, ninguno de estos indicadores anticipó subidas por sí solo mejor que el azar. Por eso describís, no predecís."""

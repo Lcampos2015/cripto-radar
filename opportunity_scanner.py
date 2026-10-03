@@ -85,17 +85,23 @@ def fmt_precio(p):
     return f"${p:,.10f}".rstrip("0")
 
 
-def build_report():
-    """Devuelve el informe como texto (lo usa radar.py para mandarlo a Telegram)."""
-    data = fetch_market()
+def detectar():
+    """Lineas de los movimientos detectados (vacia si no hay nada)."""
     lineas = []
-    for c in data:
+    for c in fetch_market():
         if not is_tradable(c):
             continue
         sigs = build_signals(c)
         if sigs:
             desc = " | ".join(f"{s} {v}" for s, v in sigs)
             lineas.append(f"• {c['symbol'].upper()} {fmt_precio(c['current_price'])} - {desc}")
+    return lineas
+
+
+def build_report(lineas=None):
+    """Devuelve el informe como texto (lo usa radar.py para mandarlo a Telegram)."""
+    if lineas is None:
+        lineas = detectar()
 
     if not lineas:
         return "\U0001F4CD MOVIMIENTOS: nada fuera de lo comun."

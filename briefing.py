@@ -13,6 +13,7 @@ import briefing_datos
 import briefing_llm
 import notify
 import verificador_cifras
+import watchlist_analyst
 
 
 def cabecera(datos):
@@ -32,20 +33,31 @@ def crudo(datos):
     return "\n".join(lineas)
 
 
-def armar():
-    """Devuelve (mensaje, resumen_para_el_log)."""
-    datos = briefing_datos.recolectar()
+def watchlist():
+    """Informe de la watchlist completa (BTC, ETH, WLD, NEAR, XRP), numeros crudos sin LLM.
+    Antes llegaba cada 30 min con el monitor; desde el 2026-10-03 llega una vez por dia aca."""
+    try:
+        return watchlist_analyst.build_report()
+    except Exception as e:
+        return f"📊 Watchlist: sin datos hoy ({type(e).__name__})"
+
+
+def armar(datos=None, titulo=None):
+    """Devuelve (mensaje, resumen_para_el_log). evento.py lo reusa con su propio titulo y datos."""
+    datos = datos or briefing_datos.recolectar()
+    titulo = titulo or cabecera(datos)
     try:
         texto, info = briefing_llm.redactar(datos)
     except Exception as e:
         aviso = f"⚠️ Hoy no se pudo redactar el briefing ({type(e).__name__}). Datos crudos:"
-        return f"{cabecera(datos)}\n\n{aviso}\n{crudo(datos)}", {"error_llm": str(e)[:200], "faltantes": datos["faltantes"]}
+        mensaje = f"{titulo}\n\n{aviso}\n{crudo(datos)}\n\n{watchlist()}"
+        return mensaje, {"error_llm": str(e)[:200], "faltantes": datos["faltantes"]}
 
     cuerpo = texto.replace(briefing_llm.PIE, "").strip()
-    dudosas = verificador_cifras.verificar(cuerpo, datos)
-    texto = verificador_cifras.anotar(texto, dudosas)
+    dudosas = verificador_cifras.verificar(cuerpo, datos)   # solo se verifica lo que redacto el LLM
     info.update({"dudosas": dudosas, "faltantes": datos["faltantes"]})
-    return f"{cabecera(datos)}\n\n{texto}", info
+    mensaje = f"{titulo}\n\n{verificador_cifras.anotar(cuerpo, dudosas)}\n\n{watchlist()}\n\n{briefing_llm.PIE}"
+    return mensaje, info
 
 
 def main():

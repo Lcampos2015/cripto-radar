@@ -20,8 +20,14 @@ import re
 PERMITIDOS = {1, 2, 7, 14, 20, 25, 30, 50, 70, 75, 100, 200, 365}
 
 FECHA_ISO = re.compile(r"\b\d{4}-\d{2}-\d{2}\b")
-# No pegada a otro numero, pero si puede terminar una oracion ("del 05/10.")
-FECHA_CORTA = re.compile(r"(?<!\d)(?<!\d[.,])\d{1,2}/\d{1,2}(?:/\d{2,4})?(?!\d)(?![.,]\d)")
+# No pegada a otro numero ni a letras ("EMA20/50/200" no es una fecha), pero si puede
+# terminar una oracion ("del 05/10."). Ademas se valida dia 1-31 y mes 1-12 en _es_fecha.
+FECHA_CORTA = re.compile(r"(?<![A-Za-zÁÉÍÓÚáéíóúñÑ\d])(?<!\d[.,])\d{1,2}/\d{1,2}(?:/\d{2,4})?(?!\d)(?![.,]\d)")
+
+
+def _es_fecha(texto):
+    d, m = texto.split("/")[:2]
+    return 1 <= int(d) <= 31 and 1 <= int(m) <= 12
 # Numero suelto: no pegado a una letra por delante (EMA20) ni a otro numero; puede tener miles y decimales.
 NUMERO = re.compile(r"(?<![A-Za-zÁÉÍÓÚáéíóúñÑ\d.,])[-+−]?\d+(?:[.,]\d+)*")
 
@@ -86,6 +92,14 @@ def _coincide(valor, decimales, valores):
     return False
 
 
+def _marcar_fecha(texto, fechas, dudosas):
+    if not _es_fecha(texto):
+        return texto              # no es una fecha: se deja para el chequeo de numeros
+    if texto not in fechas:
+        dudosas.append(texto)
+    return " "
+
+
 def verificar(texto, datos):
     """Devuelve la lista de cifras y fechas del texto que no se pueden rastrear al JSON."""
     valores, fechas = [], set()
@@ -94,11 +108,12 @@ def verificar(texto, datos):
 
     dudosas = []
     resto = texto
-    for patron in (FECHA_ISO, FECHA_CORTA):
-        for f in patron.findall(resto):
-            if f not in fechas:
-                dudosas.append(f)
-        resto = patron.sub(" ", resto)
+    for f in FECHA_ISO.findall(resto):
+        if f not in fechas:
+            dudosas.append(f)
+    resto = FECHA_ISO.sub(" ", resto)
+    # Solo las que son fechas validas; el resto ("20/50") sigue como numeros sueltos
+    resto = FECHA_CORTA.sub(lambda mt: _marcar_fecha(mt.group(0), fechas, dudosas), resto)
 
     for token in NUMERO.findall(resto):
         lecturas = _interpretaciones(token)

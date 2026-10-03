@@ -1,7 +1,12 @@
-"""Cripto Radar IA - orquestador.
+"""Cripto Radar IA - monitor de movimientos (v1).
 
-Corre los dos agentes, arma un solo mensaje y lo manda por Telegram.
-Es el punto de entrada que usa GitHub Actions (y el que podes correr a mano).
+Corre cada 30 minutos en GitHub Actions. Desde el 2026-10-03 solo manda un
+mensaje cuando detecta movimientos (antes mandaba siempre: ~48 mensajes por
+dia, y lo importante se perdia en el ruido). El informe de la watchlist paso
+al briefing diario (briefing.py).
+
+Si CoinGecko falla, se registra en el log y NO se manda nada: el briefing
+diario de las 19:05 hace de senal de vida del sistema.
 
 REGLA DURA (W1): solo analiza y avisa. Jamas ejecuta compra/venta.
 """
@@ -16,20 +21,16 @@ import watchlist_analyst
 PERU = timezone(timedelta(hours=-5))
 
 
-def seccion(nombre, fn):
-    """Corre un agente y devuelve su informe; si falla, lo reporta sin tumbar el resto."""
-    try:
-        return fn()
-    except Exception as e:
-        return f"⚠ {nombre}: fallo ({type(e).__name__}: {e})"
-
-
-def build_message():
+def build_message(lineas):
     ahora = datetime.now(PERU).strftime("%d/%m %H:%M")
+    try:
+        watchlist = watchlist_analyst.build_report()
+    except Exception as e:
+        watchlist = f"⚠ Analista: fallo ({type(e).__name__})"
     partes = [
         f"\U0001F4E1 CRIPTO RADAR - {ahora}",
-        seccion("Movimientos", opportunity_scanner.build_report),
-        seccion("Analista", watchlist_analyst.build_report),
+        opportunity_scanner.build_report(lineas),
+        watchlist,
         "—\nSolo analisis. Vos decidis cuando comprar o vender.",
     ]
     return "\n\n".join(partes)
@@ -42,7 +43,17 @@ def main():
     except Exception:
         pass
 
-    mensaje = build_message()
+    try:
+        lineas = opportunity_scanner.detectar()
+    except Exception as e:
+        print(f"Monitor: fallo CoinGecko ({type(e).__name__}: {e}). No se envia nada.")
+        return
+
+    if not lineas:
+        print("Sin movimientos fuera de lo comun. No se envia nada.")
+        return
+
+    mensaje = build_message(lineas)
     print(mensaje)
     print("\n--- enviando a Telegram ---")
     print("Enviado:", notify.send_telegram(mensaje))
