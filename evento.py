@@ -34,8 +34,9 @@ KLINES = briefing_datos.KLINES
 
 K_ATR = 2.5                 # decision de Lucho, 2026-10-03
 COOLDOWN_H = 12
-VENTANA_RECIENTE_MIN = 60   # el cron se atrasa: un cruce de la ultima hora todavia cuenta como nuevo
 VELAS_24H = 96              # velas de 15 minutos en 24 horas
+# GitHub NO corre el cron cada 30 min: el 2026-10-03 lo corria cada 4-5 horas. Por eso la
+# ventana "nueva" va desde la corrida anterior REAL (consultada a la API), no desde hace 30 min.
 
 
 def velas_15m(simbolo):
@@ -55,11 +56,14 @@ def cambios_24h(velas):
     return out
 
 
-def decidir(cambios, umbral, ultimo_aviso, ahora_ms):
+def decidir(cambios, umbral, ultimo_aviso, ahora_ms, corrida_anterior_ms=None):
     """Funcion pura. Devuelve +1 / -1 si hay que avisar de una subida / caida, o None.
 
     cambios: [(ms, pct)] ordenados; el ultimo es el momento actual.
     ultimo_aviso: {"ms": ..., "signo": ...} de esta moneda, o None.
+    corrida_anterior_ms: cuando corrio el radar la vez anterior. Un cruce posterior a eso
+        es nuevo (la corrida anterior no pudo verlo). Si no se sabe, solo se evita repetir
+        con el estado guardado.
     """
     if not cambios:
         return None
@@ -68,13 +72,33 @@ def decidir(cambios, umbral, ultimo_aviso, ahora_ms):
         return None
     signo = 1 if actual > 0 else -1
     desde = ahora_ms - COOLDOWN_H * 3600_000
-    hasta = ahora_ms - VENTANA_RECIENTE_MIN * 60_000
+    hasta = corrida_anterior_ms if corrida_anterior_ms is not None else desde
     if any(desde <= ms < hasta and pct * signo >= umbral for ms, pct in cambios[:-1]):
-        return None            # ya venia superado de antes: no es un evento nuevo
+        return None            # ya estaba superado cuando corrio la vez anterior: no es nuevo
     if (ultimo_aviso and ultimo_aviso.get("signo") == signo
             and ahora_ms - ultimo_aviso["ms"] < COOLDOWN_H * 3600_000):
         return None            # ya se aviso de este mismo movimiento
     return signo
+
+
+def corrida_anterior_ms():
+    """Inicio de la ultima corrida TERMINADA de radar.yml (la actual esta en curso).
+    Solo en GitHub Actions; si la API falla, None (queda solo el estado para no repetir)."""
+    if os.environ.get("GITHUB_ACTIONS") != "true":
+        return None
+    try:
+        url = f"{os.environ['GITHUB_API_URL']}/repos/{os.environ['GITHUB_REPOSITORY']}/actions/workflows/radar.yml/runs"
+        r = requests.get(url, params={"status": "completed", "per_page": 1}, timeout=20, headers={
+            "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}", "Accept": "application/vnd.github+json"})
+        r.raise_for_status()
+        runs = r.json()["workflow_runs"]
+        if not runs:
+            return None
+        return int(datetime.strptime(runs[0]["run_started_at"], "%Y-%m-%dT%H:%M:%SZ")
+                   .replace(tzinfo=timezone.utc).timestamp() * 1000)
+    except Exception as e:
+        print(f"No se pudo consultar la corrida anterior ({type(e).__name__}); solo se usa el estado guardado.")
+        return None
 
 
 def leer_estado():
@@ -101,13 +125,16 @@ def main():
 
     ahora_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
     estado = leer_estado()
+    anterior = corrida_anterior_ms()
+    if anterior:
+        print(f"Corrida anterior: hace {(ahora_ms - anterior) / 3600_000:.1f} h")
     eventos = []
     for moneda, (simbolo, _) in briefing_datos.MONEDAS.items():
         tec = briefing_datos.tecnico(simbolo)
         umbral = K_ATR * tec["atr_pct"]
         cambios = cambios_24h(velas_15m(simbolo))
         _, actual = cambios[-1]
-        signo = decidir(cambios, umbral, estado.get(moneda), ahora_ms)
+        signo = decidir(cambios, umbral, estado.get(moneda), ahora_ms, anterior)
         print(f"{moneda}: cambio 24h {actual:+.2f}% | umbral ±{umbral:.2f}% ({K_ATR}×ATR {tec['atr_pct']}%) | evento: {bool(signo)}")
         if signo or args.forzar == moneda:
             eventos.append({
