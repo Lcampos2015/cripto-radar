@@ -1,0 +1,32 @@
+name: Briefing diario
+
+on:
+  schedule:
+    # 00:05 UTC = 19:05 en Peru, apenas cierra la vela diaria.
+    # GitHub puede atrasarlo varios minutos.
+    - cron: "5 0 * * *"
+  workflow_dispatch:
+  push:
+    paths:   # corre al cambiar el propio workflow, para probarlo sin entrar a GitHub
+      - .github/workflows/briefing.yml
+
+jobs:
+  briefing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Armar y enviar el briefing
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python briefing.py

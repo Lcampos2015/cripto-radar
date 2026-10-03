@@ -61,6 +61,7 @@ CÓMO LEER EL JSON:
 - mvrv: precio de mercado sobre el costo promedio de los tenedores. mvrv_media_365d es su promedio del último año (más alto que la media = relativamente caro; más bajo = relativamente barato).
 - flujo_neto_exchanges: monedas que entraron menos las que salieron de los exchanges (positivo = entran, posible presión de venta; negativo = salen). flujo_neto_z30: qué tan inusual es frente a los últimos 30 días (más de 2 o menos de -2 es inusual). fecha_onchain: estos datos llegan con un día de atraso.
 - miedo_codicia: índice de sentimiento 0-100 (más de 75 codicia extrema, menos de 25 miedo extremo).
+- mvrv_lectura, flujo_lectura y flujo_inusual: la interpretación YA HECHA de esos datos. Usala tal cual para describir el sentido (si entran o salen monedas, si el MVRV está caro o barato). No la deduzcas vos de los signos.
 - regimen.btc_sobre_ema200: si BTC está sobre su EMA200.
 - faltantes: fuentes que no respondieron hoy.
 

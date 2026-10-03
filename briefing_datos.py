@@ -95,12 +95,21 @@ def onchain():
         mvrvs = [m for _, m, _ in datos[-366:-1]]
         netos = [n for _, _, n in datos[-31:-1]]
         sd = statistics.pstdev(netos)
+        media_mvrv = statistics.mean(mvrvs)
+        z = (neto - statistics.mean(netos)) / sd if sd else None
         out[activo] = {
             "fecha_onchain": fecha,
             "mvrv": r(mvrv),
-            "mvrv_media_365d": r(statistics.mean(mvrvs)),
+            "mvrv_media_365d": r(media_mvrv),
             "flujo_neto_exchanges": r(neto, 1),      # en unidades de la moneda; negativo = sale de exchanges
-            "flujo_neto_z30": r((neto - statistics.mean(netos)) / sd, 2) if sd else None,
+            "flujo_neto_z30": r(z, 2) if z is not None else None,
+            # Lecturas en palabras, hechas por el CODIGO y no por el LLM: el 2026-10-03 gpt-5.4-mini
+            # escribio "salida neta" para un flujo positivo (entraban monedas). Un signo no se interpreta mal aca.
+            "mvrv_lectura": ("por encima de su media del año (relativamente caro)" if mvrv > media_mvrv
+                             else "por debajo de su media del año (relativamente barato)"),
+            "flujo_lectura": ("entran a los exchanges más monedas de las que salen (posible presión de venta)" if neto > 0
+                              else "salen de los exchanges más monedas de las que entran (menos oferta para vender)"),
+            "flujo_inusual": None if z is None else abs(z) >= 2,
         }
     return out
 
