@@ -41,6 +41,19 @@ El backtest del 2026-10-03 (`backtest_resultados.md`) probó las tres reglas con
 
 Por eso el script se llama "monitor de movimientos" y no "buscador de oportunidades", y los umbrales están altos: el objetivo es avisar solo de lo que de verdad se sale de lo normal, con pocas alertas.
 
+## 🔬 Investigación de swing trading (2026-10-03) — en pausa
+
+Se buscó una señal de entrada para swing de 2-5 días en BTC y ETH (1% de riesgo, stop 1,5×ATR, objetivo 3×ATR, comisiones de Binance). Resultado: **ninguna señal le gana a entrar al azar**.
+
+| Prueba | Archivo | Resultado |
+|---|---|---|
+| F1 — 3 estrategias × 2, 2020-2026 | `backtest_swing.py` → `backtest_swing_resultados.md` | Ninguna pasa el criterio fijado antes |
+| F1b — 6 estrategias pre-registradas (técnicas + on-chain) | `PREREGISTRO.md`, `backtest_f1b.py` → `backtest_f1b_resultados.md` | Ninguna le gana al azar (p 0,23–0,94; vara 0,0083) |
+
+La esperanza positiva que mostraban venía del filtro "BTC sobre su EMA200" (que evitó 2022) y de la estructura de salida: entrar al azar con eso mismo ya da ≈ +0,12 R. **El período 2024 → hoy no se usó**: queda limpio para probar una hipótesis nueva, una vez y con pre-registro.
+
+`probe_fuentes.py` (+ workflow `probe.yml`): `api.binance.com` responde HTTP 451 desde GitHub Actions; `data-api.binance.vision` sí funciona.
+
 ## Credenciales
 
 `notify.py` las busca en este orden:
