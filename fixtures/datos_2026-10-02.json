@@ -1,0 +1,67 @@
+{
+  "generado_utc": "2026-10-03 18:51",
+  "monedas": {
+    "BTC": {
+      "fecha_vela": "2026-10-02",
+      "cierre": 84518.01,
+      "cambio_1d_pct": -0.43,
+      "cambio_7d_pct": 0.5,
+      "cambio_30d_pct": 9.28,
+      "ema20": 82473.98,
+      "ema50": 78336.93,
+      "ema200": 74654.23,
+      "sobre_ema20": true,
+      "sobre_ema50": true,
+      "sobre_ema200": true,
+      "dist_ema200_pct": 13.21,
+      "rsi14": 63.0,
+      "atr14": 2329.35,
+      "atr_pct": 2.76,
+      "maximo_20d": 87395.67,
+      "minimo_20d": 74967.97,
+      "volumen_usd_1d": 2268231876.0,
+      "volumen_vs_prom_20d": 1.71,
+      "fecha_onchain": "2026-10-02",
+      "mvrv": 1.57,
+      "mvrv_media_365d": 1.46,
+      "flujo_neto_exchanges": -3307.6,
+      "flujo_neto_z30": -0.09
+    },
+    "ETH": {
+      "fecha_vela": "2026-10-02",
+      "cierre": 2668.59,
+      "cambio_1d_pct": -1.4,
+      "cambio_7d_pct": -0.86,
+      "cambio_30d_pct": 11.57,
+      "ema20": 2631.67,
+      "ema50": 2465.39,
+      "ema200": 2276.57,
+      "sobre_ema20": true,
+      "sobre_ema50": true,
+      "sobre_ema200": true,
+      "dist_ema200_pct": 17.22,
+      "rsi14": 58.8,
+      "atr14": 93.32,
+      "atr_pct": 3.5,
+      "maximo_20d": 2807.34,
+      "minimo_20d": 2358.88,
+      "volumen_usd_1d": 1151282505.0,
+      "volumen_vs_prom_20d": 1.54,
+      "fecha_onchain": "2026-10-02",
+      "mvrv": 1.14,
+      "mvrv_media_365d": 1.02,
+      "flujo_neto_exchanges": 40960.6,
+      "flujo_neto_z30": 0.92
+    }
+  },
+  "faltantes": [],
+  "miedo_codicia": {
+    "valor": 67,
+    "clasificacion": "Greed",
+    "fecha": "2026-10-03"
+  },
+  "regimen": {
+    "btc_sobre_ema200": true,
+    "nota": "Filtro de régimen del backtest F1b: en 2020-2023, estar fuera cuando BTC estaba bajo su EMA200 evitó casi todo 2022."
+  }
+}
