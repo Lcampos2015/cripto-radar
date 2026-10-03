@@ -39,8 +39,9 @@ def pct(a, b):
 # ---------- fuentes ----------
 
 def velas(simbolo):
-    """Ultimas 500 velas diarias CERRADAS (500 para que la EMA200 este bien asentada)."""
-    resp = requests.get(KLINES, params={"symbol": simbolo, "interval": "1d", "limit": 500}, headers=H, timeout=30)
+    """Ultimas 1000 velas diarias CERRADAS. Con 500, la EMA200 arrastraba ~5% de error del arranque
+    (difería $256 de TradingView el 2026-10-03); con 1000 coincide al centavo."""
+    resp = requests.get(KLINES, params={"symbol": simbolo, "interval": "1d", "limit": 1000}, headers=H, timeout=30)
     resp.raise_for_status()
     ahora = int(time.time() * 1000)
     return [v for v in resp.json() if v[6] < ahora]
