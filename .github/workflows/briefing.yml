@@ -1,14 +1,10 @@
 name: Briefing diario
 
 on:
-  schedule:
-    # 00:05 UTC = 19:05 en Peru, apenas cierra la vela diaria.
-    # GitHub puede atrasarlo varios minutos.
-    - cron: "5 0 * * *"
+  # Sin "schedule" a proposito: el 2026-10-03 GitHub salteo el cron de las 19:05.
+  # Lo lanza el Worker de Cloudflare (cloudflare/worker.js) a las 00:05 UTC = 19:05 Peru
+  # via workflow_dispatch. Si GitHub tuviera su propio cron, podria llegar duplicado.
   workflow_dispatch:
-  push:
-    paths:   # corre al cambiar el propio workflow, para probarlo sin entrar a GitHub
-      - .github/workflows/briefing.yml
 
 jobs:
   briefing:

@@ -53,6 +53,8 @@ Flujo: `briefing_datos.py` (datos duros: Binance, Coin Metrics, alternative.me) 
 
 Regla de diseño: **el LLM redacta, no interpreta.** Las lecturas de signos (si entran o salen monedas de los exchanges, si el MVRV está caro o barato) las escribe el código. Pruebas: `test_verificador.py`, `test_evento.py`, `test_briefing_llm.py`.
 
+**Horarios (desde 2026-10-04):** GitHub atrasa o saltea sus propios cron (el 03/10 corrió el radar cada 4-5 h y salteó el briefing). Los lanza puntual un **Worker de Cloudflare** (`cloudflare/worker.js`, Cron Triggers `7,37 * * * *` → `radar.yml` y `5 0 * * *` → `briefing.yml`) vía `workflow_dispatch`. El Worker usa un token fine-grained con un solo permiso (Actions read/write, solo este repo, vence el 03/10/2027) guardado como secret en Cloudflare. `radar.yml` conserva su cron de GitHub como respaldo; `briefing.yml` no, para no llegar duplicado.
+
 Secrets necesarios: `TELEGRAM_TOKEN`, `TELEGRAM_CHAT_ID`, `OPENROUTER_API_KEY`. `estado_eventos.json` lo commitea el workflow cuando avisa de un evento: **antes de hacer push desde la PC, `git pull --rebase`**.
 
 ## 🔬 Investigación de swing trading (2026-10-03) — en pausa
